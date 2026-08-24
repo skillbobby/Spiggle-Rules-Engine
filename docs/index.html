@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spiggle Rules Engine — Lifecycle Rules for Laravel Filament</title>
+  <meta name="description" content="Tenant-scoped lifecycle rules for Laravel Filament — fire actions when members hit age milestones, tenure, inactivity, or spend thresholds." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50:  '#f0f9ff',
+              100: '#e0f2fe',
+              200: '#bae6fd',
+              300: '#7dd3fc',
+              400: '#38bdf8',
+              500: '#0ea5e9',
+              600: '#0284c7',
+              700: '#0369a1',
+              800: '#075985',
+              900: '#0c4a6e',
+            },
+            amber: {
+              400: '#fbbf24',
+              500: '#f59e0b',
+              600: '#d97706',
+            },
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['Fira Code', 'Consolas', 'monospace'],
+          },
+        },
+      },
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    html { scroll-behavior: smooth; }
+    .gradient-text {
+      background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 50%, #f59e0b 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-glow {
+      background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(14,165,233,0.18) 0%, transparent 70%);
+    }
+    .card-hover {
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card-hover:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 20px 40px -12px rgba(14,165,233,0.18);
+    }
+    pre { tab-size: 2; }
+    .nav-blur {
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+  </style>
+</head>
+<body class="bg-white text-slate-800 font-sans antialiased">
+
+  <!-- NAV -->
+  <nav class="sticky top-0 z-50 border-b border-slate-100 bg-white/90 nav-blur">
+    <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/>
+          </svg>
+        </div>
+        <span class="font-bold text-slate-900 text-lg tracking-tight">Spiggle Rules Engine</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="hidden sm:inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold px-3 py-1.5 rounded-full">
+          <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+          Free
+        </span>
+        <a href="https://github.com/skillbobby/Spiggle-Rules-Engine" target="_blank" rel="noopener"
+           class="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.342-3.369-1.342-.454-1.155-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.741 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+          GitHub →
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="relative overflow-hidden hero-glow pt-24 pb-20 px-6">
+    <div class="max-w-4xl mx-auto text-center">
+      <div class="inline-flex items-center gap-2 bg-brand-50 border border-brand-200 text-brand-700 text-xs font-semibold px-4 py-2 rounded-full mb-8">
+        <span class="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse"></span>
+        v1.0.0 · MIT · Free forever
+      </div>
+      <h1 class="text-5xl sm:text-6xl font-extrabold text-slate-900 leading-tight mb-6">
+        Lifecycle rules for<br/>
+        <span class="gradient-text">Laravel Filament</span>
+      </h1>
+      <p class="text-xl text-slate-500 max-w-2xl mx-auto mb-10 leading-relaxed">
+        Tenant-scoped automation engine — fire actions when members hit age milestones, tenure, inactivity, or spend thresholds. Build rules in the UI, evaluate on a schedule.
+      </p>
+      <div class="flex flex-wrap items-center justify-center gap-4">
+        <a href="#install"
+           class="inline-flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white font-semibold px-7 py-3.5 rounded-xl shadow-lg shadow-brand-500/30 transition-all hover:shadow-brand-500/50 hover:-translate-y-0.5">
+          Get Started →
+        </a>
+        <a href="https://github.com/skillbobby/Spiggle-Rules-Engine" target="_blank" rel="noopener"
+           class="inline-flex items-center gap-2 bg-white border border-slate-200 hover:border-slate-300 text-slate-700 font-semibold px-7 py-3.5 rounded-xl shadow-sm transition-all hover:-translate-y-0.5">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.342-3.369-1.342-.454-1.155-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.741 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+          View on GitHub →
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- TECH BADGES -->
+  <section class="bg-slate-50 border-y border-slate-100 py-6 px-6">
+    <div class="max-w-4xl mx-auto flex flex-wrap items-center justify-center gap-3">
+      <span class="inline-flex items-center gap-1.5 bg-white border border-slate-200 text-slate-600 text-sm font-medium px-4 py-2 rounded-full shadow-sm">
+        <span class="text-violet-500 font-bold">PHP</span> 8.2+
+      </span>
+      <span class="inline-flex items-center gap-1.5 bg-white border border-slate-200 text-slate-600 text-sm font-medium px-4 py-2 rounded-full shadow-sm">
+        <span class="text-red-500 font-bold">Laravel</span> 11+
+      </span>
+      <span class="inline-flex items-center gap-1.5 bg-white border border-slate-200 text-slate-600 text-sm font-medium px-4 py-2 rounded-full shadow-sm">
+        <span class="font-bold" style="color:#FFAA00">Filament</span> 5
+      </span>
+      <span class="inline-flex items-center gap-1.5 bg-white border border-slate-200 text-slate-600 text-sm font-medium px-4 py-2 rounded-full shadow-sm">
+        <span class="text-brand-500 font-bold">MIT</span> License
+      </span>
+      <span class="inline-flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-semibold px-4 py-2 rounded-full">
+        ✓ Free forever
+      </span>
+    </div>
+  </section>
+
+  <!-- FREE FOREVER BANNER -->
+  <section class="bg-gradient-to-r from-brand-500 to-brand-600 py-4 px-6 text-center text-white">
+    <p class="text-sm font-medium">
+      🎉 <strong>100% free and open source.</strong> MIT License · No paid tiers · No license keys · Fork it, ship it, contribute back.
+    </p>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="py-24 px-6">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-16">
+        <h2 class="text-4xl font-extrabold text-slate-900 mb-4">Everything you need</h2>
+        <p class="text-lg text-slate-500 max-w-xl mx-auto">All the tools to build powerful lifecycle automations without writing custom cron jobs.</p>
+      </div>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+        <div class="bg-white border border-slate-100 rounded-2xl p-7 shadow-sm card-hover">
+          <div class="w-11 h-11 rounded-xl bg-brand-50 flex items-center justify-center mb-5">
+            <svg class="w-6 h-6 text-brand-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <h3 class="font-bold text-slate-900 text-lg mb-2">Preset Triggers</h3>
+          <p class="text-slate-500 text-sm leading-relaxed">Five built-in trigger types: age milestones, tenure, inactivity, metric thresholds, and custom field matching — zero boilerplate.</p>
+        </div>
+
+        <div class="bg-white border border-slate-100 rounded-2xl p-7 shadow-sm card-hover">
+          <div class="w-11 h-11 rounded-xl bg-amber-50 flex items-center justify-center mb-5">
+            <svg class="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"/></svg>
+          </div>
+          <h3 class="font-bold text-slate-900 text-lg mb-2">Visual Conditions</h3>
+          <p class="text-slate-500 text-sm leading-relaxed">Add AND conditions on any attribute/operator/value pair to filter subjects after the preset fires — all configurable in the Filament UI.</p>
+        </div>
+
+        <div class="bg-white border border-slate-100 rounded-2xl p-7 shadow-sm card-hover">
+          <div class="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center mb-5">
+            <svg class="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          </div>
+          <h3 class="font-bold text-slate-900 text-lg mb-2">5 Built-in Actions</h3>
+          <p class="text-slate-500 text-sm leading-relaxed">Update member meta, merge tenant settings, notify admins, create reminders, or dispatch Laravel events — extensible via host callbacks.</p>
+        </div>
+
+        <div class="bg-white border border-slate-100 rounded-2xl p-7 shadow-sm card-hover">
+          <div class="w-11 h-11 rounded-xl bg-violet-50 flex items-center justify-center mb-5">
+            <svg class="w-6 h-6 text-violet-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          </div>
+          <h3 class="font-bold text-slate-900 text-lg mb-2">Idempotency</h3>
+          <p class="text-slate-500 text-sm leading-relaxed">The <code class="text-xs bg-slate-100 px-1 py-0.5 rounded font-mono">rule_execution_logs</code> table ensures rules fire at most once per subject, even if evaluation runs multiple times.</p>
+        </div>
+
+        <div class="bg-white border border-slate-100 rounded-2xl p-7 shadow-sm card-hover">
+          <div class="w-11 h-11 rounded-xl bg-rose-50 flex items-center justify-center mb-5">
+            <svg class="w-6 h-6 text-rose-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/></svg>
+          </div>
+          <h3 class="font-bold text-slate-900 text-lg mb-2">Filament UI</h3>
+          <p class="text-slate-500 text-sm leading-relaxed">Full CRUD resource inside your existing Filament panel. Build, edit, enable, and audit rules without touching the database directly.</p>
+        </div>
+
+        <div class="bg-white border border-slate-100 rounded-2xl p-7 shadow-sm card-hover">
+          <div class="w-11 h-11 rounded-xl bg-sky-50 flex items-center justify-center mb-5">
+            <svg class="w-6 h-6 text-sky-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+          </div>
+          <h3 class="font-bold text-slate-900 text-lg mb-2">Login Evaluation</h3>
+          <p class="text-slate-500 text-sm leading-relaxed">Optionally evaluate rules on member login for real-time trigger checks — useful for birthday greetings and inactivity reset triggers.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="bg-slate-50 border-y border-slate-100 py-24 px-6" id="install">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-16">
+        <h2 class="text-4xl font-extrabold text-slate-900 mb-4">How it works</h2>
+        <p class="text-lg text-slate-500 max-w-xl mx-auto">Up and running in four steps.</p>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-12 items-start">
+        <!-- Steps -->
+        <div class="space-y-8">
+          <div class="flex gap-5">
+            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-brand-500 text-white flex items-center justify-center font-bold text-sm">1</div>
+            <div>
+              <h3 class="font-bold text-slate-900 text-lg mb-1">Install</h3>
+              <p class="text-slate-500 text-sm mb-3">Require via Composer, publish the config and migrations, then run migrate.</p>
+              <pre class="bg-slate-900 text-slate-100 text-xs rounded-xl p-4 overflow-x-auto font-mono leading-relaxed"><span class="text-slate-400">$</span> composer require spiggle/rules-engine
+<span class="text-slate-400">$</span> php artisan vendor:publish --tag=rules-engine-config
+<span class="text-slate-400">$</span> php artisan vendor:publish --tag=rules-engine-migrations
+<span class="text-slate-400">$</span> php artisan migrate</pre>
+            </div>
+          </div>
+
+          <div class="flex gap-5">
+            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-brand-500 text-white flex items-center justify-center font-bold text-sm">2</div>
+            <div>
+              <h3 class="font-bold text-slate-900 text-lg mb-1">Register the plugin</h3>
+              <p class="text-slate-500 text-sm mb-3">Add the plugin to your Filament panel provider.</p>
+              <pre class="bg-slate-900 text-slate-100 text-xs rounded-xl p-4 overflow-x-auto font-mono leading-relaxed"><span class="text-sky-400">use</span> Spiggle\RulesEngine\Filament\RulesEnginePlugin;
+
+<span class="text-amber-400">$panel</span>-&gt;plugin(RulesEnginePlugin::make());</pre>
+            </div>
+          </div>
+
+          <div class="flex gap-5">
+            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-brand-500 text-white flex items-center justify-center font-bold text-sm">3</div>
+            <div>
+              <h3 class="font-bold text-slate-900 text-lg mb-1">Configure host resolvers</h3>
+              <p class="text-slate-500 text-sm">Wire up your <code class="text-xs bg-slate-200 px-1 rounded font-mono">subject_model</code>, <code class="text-xs bg-slate-200 px-1 rounded font-mono">scope_model</code>, resolvers, and action callbacks in <code class="text-xs bg-slate-200 px-1 rounded font-mono">config/rules-engine.php</code>.</p>
+            </div>
+          </div>
+
+          <div class="flex gap-5">
+            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-brand-500 text-white flex items-center justify-center font-bold text-sm">4</div>
+            <div>
+              <h3 class="font-bold text-slate-900 text-lg mb-1">Create rules &amp; schedule</h3>
+              <p class="text-slate-500 text-sm mb-3">Build rules in the Filament UI and schedule evaluation.</p>
+              <pre class="bg-slate-900 text-slate-100 text-xs rounded-xl p-4 overflow-x-auto font-mono leading-relaxed"><span class="text-amber-400">Schedule</span>::call(<span class="text-sky-400">function</span> () {
+  app(RuleEvaluator::class)
+    -&gt;evaluateAllActiveRules(<span class="text-emerald-400">'scheduled'</span>);
+})-&gt;dailyAt(<span class="text-emerald-400">'01:15'</span>);</pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sample rule seed code -->
+        <div>
+          <h3 class="font-bold text-slate-900 text-lg mb-4">Sample rule seed</h3>
+          <pre class="bg-slate-900 text-slate-100 text-xs rounded-xl p-6 overflow-x-auto font-mono leading-relaxed h-full"><span class="text-slate-400">// database/seeders/SampleRuleSeeder.php</span>
+
+<span class="text-sky-400">use</span> Spiggle\RulesEngine\Models\Rule;
+
+Rule::create([
+  <span class="text-emerald-400">'name'</span>         =&gt; <span class="text-emerald-400">'Happy 18th Birthday'</span>,
+  <span class="text-emerald-400">'preset_type'</span>  =&gt; <span class="text-emerald-400">'age_milestone'</span>,
+  <span class="text-emerald-400">'preset_params'</span> =&gt; [
+    <span class="text-emerald-400">'dob_attribute'</span> =&gt; <span class="text-emerald-400">'date_of_birth'</span>,
+    <span class="text-emerald-400">'age'</span>           =&gt; 18,
+  ],
+  <span class="text-emerald-400">'conditions'</span>  =&gt; [],
+  <span class="text-emerald-400">'actions'</span>     =&gt; [
+    [
+      <span class="text-emerald-400">'type'</span>    =&gt; <span class="text-emerald-400">'notify_scope_admins'</span>,
+      <span class="text-emerald-400">'payload'</span> =&gt; [
+        <span class="text-emerald-400">'message'</span> =&gt; <span class="text-emerald-400">'Member turns 18 today'</span>,
+      ],
+    ],
+    [
+      <span class="text-emerald-400">'type'</span>    =&gt; <span class="text-emerald-400">'set_member_meta'</span>,
+      <span class="text-emerald-400">'payload'</span> =&gt; [
+        <span class="text-emerald-400">'key'</span>   =&gt; <span class="text-emerald-400">'adult_milestone_reached'</span>,
+        <span class="text-emerald-400">'value'</span> =&gt; <span class="text-sky-400">true</span>,
+      ],
+    ],
+  ],
+  <span class="text-emerald-400">'is_active'</span>    =&gt; <span class="text-sky-400">true</span>,
+  <span class="text-emerald-400">'scope_id'</span>     =&gt; <span class="text-sky-400">null</span>, <span class="text-slate-400">// null = all scopes</span>
+]);</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRESETS -->
+  <section class="py-24 px-6">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-16">
+        <h2 class="text-4xl font-extrabold text-slate-900 mb-4">Preset triggers</h2>
+        <p class="text-lg text-slate-500 max-w-xl mx-auto">Choose a preset and configure its parameters — no custom evaluator code required.</p>
+      </div>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+
+        <div class="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm card-hover">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="bg-violet-100 text-violet-700 text-xs font-bold px-2.5 py-1 rounded-lg font-mono">age_milestone</span>
+          </div>
+          <h3 class="font-bold text-slate-900 mb-2">Age Milestone</h3>
+          <p class="text-slate-500 text-sm leading-relaxed">Fires when a subject's calculated age (from a DOB attribute) reaches a configured number of years.</p>
+          <p class="mt-3 text-xs text-slate-400 font-mono">Params: dob_attribute, age</p>
+        </div>
+
+        <div class="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm card-hover">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="bg-sky-100 text-sky-700 text-xs font-bold px-2.5 py-1 rounded-lg font-mono">tenure_milestone</span>
+          </div>
+          <h3 class="font-bold text-slate-900 mb-2">Tenure Milestone</h3>
+          <p class="text-slate-500 text-sm leading-relaxed">Fires when a subject has been a member for a configured number of days, calculated from a pivot joined-date attribute.</p>
+          <p class="mt-3 text-xs text-slate-400 font-mono">Params: joined_date_attribute, days</p>
+        </div>
+
+        <div class="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm card-hover">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="bg-amber-100 text-amber-700 text-xs font-bold px-2.5 py-1 rounded-lg font-mono">inactivity</span>
+          </div>
+          <h3 class="font-bold text-slate-900 mb-2">Inactivity</h3>
+          <p class="text-slate-500 text-sm leading-relaxed">Fires when a subject hasn't been active (checked via a last-active attribute) for more than a configured number of days.</p>
+          <p class="mt-3 text-xs text-slate-400 font-mono">Params: last_active_attribute, days</p>
+        </div>
+
+        <div class="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm card-hover">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="bg-emerald-100 text-emerald-700 text-xs font-bold px-2.5 py-1 rounded-lg font-mono">metric_threshold</span>
+          </div>
+          <h3 class="font-bold text-slate-900 mb-2">Metric Threshold</h3>
+          <p class="text-slate-500 text-sm leading-relaxed">Fires when a host-provided metric (spend, points, logins…) crosses a threshold. Bind a <code class="text-xs bg-slate-100 px-1 rounded font-mono">MetricProviderInterface</code> to enable.</p>
+          <p class="mt-3 text-xs text-slate-400 font-mono">Params: metric_key, operator, value</p>
+        </div>
+
+        <div class="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm card-hover">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="bg-rose-100 text-rose-700 text-xs font-bold px-2.5 py-1 rounded-lg font-mono">custom_field_match</span>
+          </div>
+          <h3 class="font-bold text-slate-900 mb-2">Custom Field Match</h3>
+          <p class="text-slate-500 text-sm leading-relaxed">Fires when any subject attribute satisfies a configured operator/value comparison. Great for dynamic field values and flags.</p>
+          <p class="mt-3 text-xs text-slate-400 font-mono">Params: attribute, operator, value</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ACTIONS -->
+  <section class="bg-slate-900 py-24 px-6 text-white">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-16">
+        <h2 class="text-4xl font-extrabold text-white mb-4">Actions</h2>
+        <p class="text-lg text-slate-400 max-w-xl mx-auto">When a rule fires, one or more actions execute. Chain as many as you need.</p>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-slate-700">
+              <th class="text-left py-4 px-5 text-slate-400 font-semibold">Action</th>
+              <th class="text-left py-4 px-5 text-slate-400 font-semibold">Key</th>
+              <th class="text-left py-4 px-5 text-slate-400 font-semibold">Description</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800">
+            <tr class="hover:bg-slate-800/50 transition-colors">
+              <td class="py-4 px-5 font-semibold text-white">Set Member Meta</td>
+              <td class="py-4 px-5"><code class="text-brand-300 font-mono text-xs bg-slate-800 px-2 py-1 rounded">set_member_meta</code></td>
+              <td class="py-4 px-5 text-slate-400">Merges a key/value pair into the subject's pivot JSON meta field.</td>
+            </tr>
+            <tr class="hover:bg-slate-800/50 transition-colors">
+              <td class="py-4 px-5 font-semibold text-white">Set Scope Settings</td>
+              <td class="py-4 px-5"><code class="text-brand-300 font-mono text-xs bg-slate-800 px-2 py-1 rounded">set_scope_settings</code></td>
+              <td class="py-4 px-5 text-slate-400">Merges a key/value pair into the tenant/scope settings object.</td>
+            </tr>
+            <tr class="hover:bg-slate-800/50 transition-colors">
+              <td class="py-4 px-5 font-semibold text-white">Notify Scope Admins</td>
+              <td class="py-4 px-5"><code class="text-brand-300 font-mono text-xs bg-slate-800 px-2 py-1 rounded">notify_scope_admins</code></td>
+              <td class="py-4 px-5 text-slate-400">Calls your host-provided <code class="text-xs bg-slate-700 px-1 rounded font-mono">notify_scope_admins</code> callback with a payload.</td>
+            </tr>
+            <tr class="hover:bg-slate-800/50 transition-colors">
+              <td class="py-4 px-5 font-semibold text-white">Create Reminder</td>
+              <td class="py-4 px-5"><code class="text-brand-300 font-mono text-xs bg-slate-800 px-2 py-1 rounded">create_reminder</code></td>
+              <td class="py-4 px-5 text-slate-400">Calls your host-provided <code class="text-xs bg-slate-700 px-1 rounded font-mono">create_reminder</code> callback with subject + scope.</td>
+            </tr>
+            <tr class="hover:bg-slate-800/50 transition-colors">
+              <td class="py-4 px-5 font-semibold text-white">Dispatch Event</td>
+              <td class="py-4 px-5"><code class="text-brand-300 font-mono text-xs bg-slate-800 px-2 py-1 rounded">dispatch_event</code></td>
+              <td class="py-4 px-5 text-slate-400">Fires a named Laravel event with the subject and rule payload — hook your own listeners.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- OTHER SPIGGLE PACKAGES -->
+  <section class="py-24 px-6">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-16">
+        <h2 class="text-4xl font-extrabold text-slate-900 mb-4">Other Spiggle packages</h2>
+        <p class="text-lg text-slate-500 max-w-xl mx-auto">Rules Engine pairs perfectly with the rest of the Spiggle ecosystem.</p>
+      </div>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+
+        <a href="https://github.com/skillbobby/Spiggle-Form-Builder-Core" target="_blank" rel="noopener"
+           class="group bg-white border border-slate-100 rounded-2xl p-6 shadow-sm card-hover block no-underline">
+          <div class="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center mb-4 group-hover:bg-brand-100 transition-colors">
+            <svg class="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          </div>
+          <h3 class="font-bold text-slate-900 mb-2 group-hover:text-brand-600 transition-colors">Form Builder Core</h3>
+          <p class="text-slate-500 text-sm leading-relaxed">Public forms for Laravel + Filament — build once, publish anywhere.</p>
+          <span class="mt-4 inline-flex items-center gap-1 text-brand-500 text-xs font-semibold">View →</span>
+        </a>
+
+        <a href="https://github.com/skillbobby/Spiggle-Dynamic-Fields-Core" target="_blank" rel="noopener"
+           class="group bg-white border border-slate-100 rounded-2xl p-6 shadow-sm card-hover block no-underline">
+          <div class="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center mb-4 group-hover:bg-amber-100 transition-colors">
+            <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7"/></svg>
+          </div>
+          <h3 class="font-bold text-slate-900 mb-2 group-hover:text-amber-600 transition-colors">Dynamic Fields Core</h3>
+          <p class="text-slate-500 text-sm leading-relaxed">Reusable custom field types for Eloquent models with Filament management.</p>
+          <span class="mt-4 inline-flex items-center gap-1 text-amber-500 text-xs font-semibold">View →</span>
+        </a>
+
+        <a href="https://github.com/skillbobby/Spiggle-Dashlet-Core" target="_blank" rel="noopener"
+           class="group bg-white border border-slate-100 rounded-2xl p-6 shadow-sm card-hover block no-underline">
+          <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center mb-4 group-hover:bg-emerald-100 transition-colors">
+            <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          </div>
+          <h3 class="font-bold text-slate-900 mb-2 group-hover:text-emerald-600 transition-colors">Dashlet Core</h3>
+          <p class="text-slate-500 text-sm leading-relaxed">Draggable, configurable dashboard widgets for Filament panels.</p>
+          <span class="mt-4 inline-flex items-center gap-1 text-emerald-500 text-xs font-semibold">View →</span>
+        </a>
+
+        <a href="https://github.com/skillbobby/filament-spiggle-theme" target="_blank" rel="noopener"
+           class="group bg-white border border-slate-100 rounded-2xl p-6 shadow-sm card-hover block no-underline">
+          <div class="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center mb-4 group-hover:bg-rose-100 transition-colors">
+            <svg class="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>
+          </div>
+          <h3 class="font-bold text-slate-900 mb-2 group-hover:text-rose-600 transition-colors">Spiggle Theme</h3>
+          <p class="text-slate-500 text-sm leading-relaxed">Crisp, clean, and high-energy Filament theme for your Spiggle stack.</p>
+          <span class="mt-4 inline-flex items-center gap-1 text-rose-500 text-xs font-semibold">View →</span>
+        </a>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="bg-slate-900 border-t border-slate-800 py-12 px-6">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <div class="w-7 h-7 rounded-lg bg-brand-500 flex items-center justify-center">
+          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/>
+          </svg>
+        </div>
+        <span class="text-slate-300 font-semibold">Spiggle Rules Engine</span>
+      </div>
+      <p class="text-slate-500 text-sm text-center">
+        MIT License · Free forever · Made by <a href="https://github.com/skillbobby" class="text-brand-400 hover:text-brand-300 transition-colors">Spiggle</a>
+      </p>
+      <a href="https://github.com/skillbobby/Spiggle-Rules-Engine" target="_blank" rel="noopener"
+         class="text-slate-400 hover:text-white transition-colors">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.342-3.369-1.342-.454-1.155-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.741 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+      </a>
+    </div>
+  </footer>
+
+</body>
+</html>
