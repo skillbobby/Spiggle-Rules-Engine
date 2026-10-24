@@ -181,7 +181,7 @@ return [
 |---|---|
 | [Spiggle Form Builder Core](https://github.com/skillbobby/Spiggle-Form-Builder-Core) | Public forms for Laravel + Filament |
 | [Spiggle Dynamic Fields Core](https://github.com/skillbobby/Spiggle-Dynamic-Fields-Core) | Reusable custom field types for Eloquent models |
-| [Spiggle Dashlet Core](https://github.com/skillbobby/Spiggle-Dashlet-Core) | Draggable dashboard widgets for Filament |
+| [Spiggle Visual Dashboards](https://github.com/skillbobby/Spiggle-Visual-Dashboards) | Power BI-style dashboard canvas for Laravel Filament |
 | [Spiggle Theme](https://github.com/skillbobby/filament-spiggle-theme) | Crisp, clean, high-energy Filament theme |
 
 ---
